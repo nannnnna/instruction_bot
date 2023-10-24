@@ -25,13 +25,13 @@ def convert_pdf_to_text(file_path):
         reader = PyPDF2.PdfReader(file)
         text = ""
         for page in range(len(reader.pages)):
-            text += reader.getPage(page).extractText()
+            text += reader.pages[page].extract_text()
     return text
 
 # Поиск фрагмента текста
 def find_relevant_excerpt(text, query):
     doc = nlp(text)
-    sentences = [sent.string.strip() for sent in doc.sents]
+    sentences = [sent.text.strip() for sent in doc.sents]
     
     max_similarity = 0
     most_relevant_sentence = ""
