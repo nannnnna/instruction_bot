@@ -37,7 +37,7 @@ cleaned_text_oper = re.sub(r'\.{2,}', '', text_from_oper)
 # print(cleaned_text)
 # Функция для фильтрации текста по заданному шаблону
 def filter_by_pattern(text):
-    return "\n".join([line for line in text.split("\n") if re.match(r'^\d+\.', line)])
+    return "\n".join([line for line in text.split("\n") if re.match(r'^\d+\.\s[^.].*', line)])
 
 filtered_text_i = filter_by_pattern(cleaned_text_inst)
 filtered_text_o = filter_by_pattern(cleaned_text_oper)
@@ -51,14 +51,31 @@ print(filtered_text_o)
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
+    
+    # Разбиваем текст на строки
+    lines_i = filtered_text_i.split('\n')
+    lines_o = filtered_text_o.split('\n')
+    
     # Создание инлайн клавиатуры
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
 
     
-    # Добавление 11 пустых кнопок
-    for _ in range(11):
-        button = InlineKeyboardButton(text=" ", callback_data="empty_data")
-        keyboard.inline_keyboard.append([button])
+    # Добавление кнопок на основе первых 22 строк
+    for i in range(22):
+        if i < len(lines_i):
+            text_i = lines_i[i]
+        else:
+            text_i = ""
+        
+        if i < len(lines_o):
+            text_o = lines_o[i]
+        else:
+            text_o = ""
+
+        button_i = InlineKeyboardButton(text=text_i, callback_data=f"button_i_{i}")
+        button_o = InlineKeyboardButton(text=text_o, callback_data=f"button_o_{i}")
+
+        keyboard.inline_keyboard.append([button_i, button_o])
 
 
     # Отправка сообщения с инлайн клавиатурой
