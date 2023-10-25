@@ -8,6 +8,7 @@ import fitz
 import io
 
 from os import getenv
+from aiogram import F
 from PIL import Image, ImageDraw, ImageFont
 from aiogram import Bot, Dispatcher, types
 from aiogram.enums import ParseMode
@@ -16,6 +17,8 @@ from aiogram.types import Message
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hbold
 from dotenv import load_dotenv
+from aiogram.types import CallbackQuery
+
 
 load_dotenv()
 
@@ -44,6 +47,10 @@ def filter_by_pattern(text):
 
 filtered_text_i = filter_by_pattern(cleaned_text_inst)
 filtered_text_o = filter_by_pattern(cleaned_text_oper)
+lines_i = filtered_text_i.split('\n') # text for second buttons
+lines_o = filtered_text_o.split('\n')
+# print(lines_i)
+# print(lines_o)
 # print(filtered_text_i)
 # print(filtered_text_o)
 # for page_num, text in enumerate(texts_from_pdf, 1): вывод всего текста с допоплнительной нумерацией страниц
@@ -121,50 +128,43 @@ def extract_images_from_combined_file(image_path, page_number, page_heights, out
 
     return output_path
 
-output_folder = 'admi_images'
-for page_number in range(2, 46):
-    extracted_image_path = extract_images_from_combined_file('C:/Users/79819/Documents/GitHub/instruction_bot/admi_images.png', page_number, page_heights, output_folder)
-    print(f"Изображение для {page_number} страницы сохранено как: {extracted_image_path}")
+# output_folder = 'admi_images'
+# for page_number in range(2, 46):
+#     extracted_image_path = extract_images_from_combined_file('C:/Users/79819/Documents/GitHub/instruction_bot/admi_images.png', page_number, page_heights, output_folder)
+#     # print(f"Изображение для {page_number} страницы сохранено как: {extracted_image_path}")
     
-output_folder = 'oper_images'
-for page_number in range(2, 46):
-    oper_image_path = extract_images_from_combined_file('C:/Users/79819/Documents/GitHub/instruction_bot/oper_images.png', page_number, page_heights, output_folder)
-    print(f"Изображение для {page_number} страницы сохранено как: {oper_image_path}")
+# output_folder = 'oper_images'
+# for page_number in range(2, 46):
+#     oper_image_path = extract_images_from_combined_file('C:/Users/79819/Documents/GitHub/instruction_bot/oper_images.png', page_number, page_heights, output_folder)
+#     # print(f"Изображение для {page_number} страницы сохранено как: {oper_image_path}")
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+async def cmd_start(message: types.Message):
+    kb = [
+        [
+            types.KeyboardButton(text="администратор"),
+            types.KeyboardButton(text="оператор")
+        ]
+    ]
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=kb,resize_keyboard=True,
+        input_field_placeholder="Выберите роль"
+        )
+    await message.answer("Какая инструкция вам нужна?", reply_markup=keyboard)
     
-    # Разбиваем текст на строки
-    lines_i = filtered_text_i.split('\n')
-    lines_o = filtered_text_o.split('\n')
-    
-    # Создание инлайн клавиатуры
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
-
-    
-    # Добавление кнопок на основе первых 22 строк
-    for i in range(22):
-        if i < len(lines_i):
-            text_i = lines_i[i]
-        else:
-            text_i = ""
+    @dp.message(F.text.lower() == "администратор")
+    async def admin_handler(message: types.Message):
+        kb = [[types.KeyboardButton(text=line)] for line in lines_i]
+        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+        await message.answer("Выберите инструкцию:", reply_markup=keyboard)
         
-        if i < len(lines_o):
-            text_o = lines_o[i]
-        else:
-            text_o = ""
-
-        button_i = InlineKeyboardButton(text=text_i, callback_data=f"button_i_{i}")
-        button_o = InlineKeyboardButton(text=text_o, callback_data=f"button_o_{i}")
-
-        keyboard.inline_keyboard.append([button_i, button_o])
-
-
-    # Отправка сообщения с инлайн клавиатурой
-    await message.answer(
-        f"Hello, {hbold(message.from_user.full_name)}! Выберите раздел инструкции.",
-        reply_markup=keyboard
-    )
+    @dp.message(F.text.lower() == "оператор")
+    async def operator_handler(message: types.Message):
+        kb = [[types.KeyboardButton(text=line)] for line in lines_o]
+        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+        await message.answer("Выберите инструкцию:", reply_markup=keyboard)
+        
+        
 
 
 async def main() -> None:
