@@ -56,10 +56,10 @@ lines_o = filtered_text_o.split('\n')
 # print(lines_o)
 # print(filtered_text_i)
 # print(filtered_text_o)
-# for page_num, text in enumerate(texts_from_pdf, 1): вывод всего текста с допоплнительной нумерацией страниц
-#     print(f"------ Page {page_num} ------")
-#     print(text)
-#     print("-----------------------------\n")
+for page_num, text in enumerate(text_from_inst, 1): #вывод всего текста с допоплнительной нумерацией страниц
+    print(f"------ Page {page_num} ------")
+    print(text)
+    print("-----------------------------\n")
 
 #work eith image 
 def extract_and_save_images_from_pdf_with_pymupdf(pdf_path, output_file):
@@ -147,6 +147,7 @@ def make_keyboard_from_lines(lines):
         button = InlineKeyboardButton(line, callback_data=line)
         keyboard.add(button)
     return keyboard
+
 # Команда /start
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
@@ -164,6 +165,7 @@ async def process_admin_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     keyboard = make_keyboard_from_lines(lines_i)
     await bot.send_message(callback_query.from_user.id, "Выберите элемент:", reply_markup=keyboard)
+    print(1)
 
 
 @dp.callback_query_handler(lambda c: c.data == "operator")
@@ -171,7 +173,13 @@ async def process_operator_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     keyboard = make_keyboard_from_lines(lines_o)
     await bot.send_message(callback_query.from_user.id, "Выберите элемент:", reply_markup=keyboard)
+    print(2) 
 
+# Обработчик CallbackQuery для элементов lines_i и lines_o
+@dp.callback_query_handler(lambda c: c.data in lines_i or c.data in lines_o)
+async def process_item_callback(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id, text=f"Вы выбрали: {callback_query.data}")
+    logging.info(f"Выбрано: {callback_query.data}")
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
