@@ -6,27 +6,30 @@ import PyPDF2
 import re
 import fitz
 import io
+import logging
+import asyncio
+import sys
 
-from os import getenv
-from aiogram import F
-from PIL import Image, ImageDraw, ImageFont
 from aiogram import Bot, Dispatcher, types
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import Message
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.markdown import hbold
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils import executor
+from os import getenv
+from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
-from aiogram.types import CallbackQuery
 
 
 load_dotenv()
 
 token = os.getenv("token")
-dp = Dispatcher()
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(token=token)
+dp = Dispatcher(bot)
+
+button_press_count = {"администратор": 0, "оператор": 0}
+
 
 #text and image from pdf 
-
 def convert_pdf_to_text_range(file_path, start_page, end_page):
     with open(file_path, "rb") as file:
         reader = PyPDF2.PdfReader(file)
@@ -138,40 +141,37 @@ def extract_images_from_combined_file(image_path, page_number, page_heights, out
 #     oper_image_path = extract_images_from_combined_file('C:/Users/79819/Documents/GitHub/instruction_bot/oper_images.png', page_number, page_heights, output_folder)
 #     # print(f"Изображение для {page_number} страницы сохранено как: {oper_image_path}")
 
-@dp.message(CommandStart())
-async def cmd_start(message: types.Message):
-    kb = [
-        [
-            types.KeyboardButton(text="администратор"),
-            types.KeyboardButton(text="оператор")
-        ]
-    ]
-    keyboard = types.ReplyKeyboardMarkup(
-        keyboard=kb,resize_keyboard=True,
-        input_field_placeholder="Выберите роль"
-        )
-    await message.answer("Какая инструкция вам нужна?", reply_markup=keyboard)
-    
-    @dp.message(F.text.lower() == "администратор")
-    async def admin_handler(message: types.Message):
-        kb = [[types.KeyboardButton(text=line)] for line in lines_i]
-        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-        await message.answer("Выберите инструкцию:", reply_markup=keyboard)
-        
-    @dp.message(F.text.lower() == "оператор")
-    async def operator_handler(message: types.Message):
-        kb = [[types.KeyboardButton(text=line)] for line in lines_o]
-        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
-        await message.answer("Выберите инструкцию:", reply_markup=keyboard)
-        
-        
+def make_keyboard_from_lines(lines):
+    keyboard = InlineKeyboardMarkup()
+    for line in lines:
+        button = InlineKeyboardButton(line, callback_data=line)
+        keyboard.add(button)
+    return keyboard
+# Команда /start
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    keyboard = InlineKeyboardMarkup()
+    button1 = InlineKeyboardButton("Администратор", callback_data="admin")
+    button2 = InlineKeyboardButton("Оператор", callback_data="operator")
+    keyboard.add(button1, button2)
+    await message.reply("Выберите свою роль:", reply_markup=keyboard)
 
 
-async def main() -> None:
-    bot = Bot(token, parse_mode=ParseMode.HTML)
-    await dp.start_polling(bot)
+
+# Обработчик CallbackQuery для "Администратора" и "Оператора"
+@dp.callback_query_handler(lambda c: c.data == "admin")
+async def process_admin_callback(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    keyboard = make_keyboard_from_lines(lines_i)
+    await bot.send_message(callback_query.from_user.id, "Выберите элемент:", reply_markup=keyboard)
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
+@dp.callback_query_handler(lambda c: c.data == "operator")
+async def process_operator_callback(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    keyboard = make_keyboard_from_lines(lines_o)
+    await bot.send_message(callback_query.from_user.id, "Выберите элемент:", reply_markup=keyboard)
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
