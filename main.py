@@ -73,7 +73,7 @@ def split_text_to_pages(text):
     return pages_dict
 
 pages_dict_o = split_text_to_pages(text_inst_oper)
-print(pages_dict_o)
+# print(pages_dict_o)
 # Удаление последовательности точек
 cleaned_text_inst = re.sub(r'\.{2,}', '', text_from_inst)
 # print(cleaned_text_inst)
@@ -277,6 +277,7 @@ async def process_item_callback(callback_query: types.CallbackQuery):
         await bot.send_message(callback_query.from_user.id, pages_text or "Текст отсутствует.")
     else:
         await bot.send_message(callback_query.from_user.id, "Не удалось найти диапазон страниц.")
+        
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
