@@ -1,7 +1,6 @@
 import PyPDF2
 import re
 
-#text from pdf-files
 def convert_pdf_to_text_range(file_path, start_page, end_page):
     with open(file_path, "rb") as file:
         reader = PyPDF2.PdfReader(file)
@@ -10,15 +9,11 @@ def convert_pdf_to_text_range(file_path, start_page, end_page):
             text += reader.pages[page].extract_text()
     return text
 
-#all text from files
 text_inst_admi= convert_pdf_to_text_range("this.pdf", 1, 45)
 text_inst_oper= convert_pdf_to_text_range("oper.pdf", 1, 18)
-
-#text for buttons 
 text_from_inst= convert_pdf_to_text_range("this.pdf", 2, 3)
 text_from_oper= convert_pdf_to_text_range("oper.pdf", 2, 2)
 
-#convert text to dict for pages
 def split_text_to_pages(text, pattern):
     pages = re.split(pattern, text)
     pages_dict = {}
@@ -31,28 +26,22 @@ def split_text_to_pages(text, pattern):
 
     return pages_dict
 
-#dict for admin
+#текст ответов "администратор"
 pattern_i = r'Руководство администратора\s+Стр\. \d+ из \d+'
 pages_dict_i = split_text_to_pages(text_inst_admi, pattern_i)
 
-#dict for operator
+#текст ответов "оператор"
 pattern_o = r'Руководство оператора\s+Стр\. \d+ из \d+'
 pages_dict_o = split_text_to_pages(text_inst_oper, pattern_o)
 
-
-#this is all headers from pages 2-3
 cleaned_text_inst = re.sub(r'\.{2,}', '', text_from_inst)
 cleaned_text_oper = re.sub(r'\.{2,}', '', text_from_oper)
-
-
 
 def filter_by_pattern(text):
     return "\n".join([line for line in text.split("\n") if re.match(r'^\d+\.\s[^.].*', line)])
 
-#this is headers for buttons
 filtered_text_i = filter_by_pattern(cleaned_text_inst)
 filtered_text_o = filter_by_pattern(cleaned_text_oper)
-#this is headers for buttons in dict
 lines_i = filtered_text_i.split('\n') 
 lines_o = filtered_text_o.split('\n')
 
@@ -60,28 +49,23 @@ def process_lines(lines):
     new_lines = []
 
     for i in range(len(lines)):
-        match = re.search(r"(\d+)\s*$", lines[i])  # Ищем номер страницы в конце строки, учитывая возможные пробелы.
-
+        match = re.search(r"(\d+)\s*$", lines[i])  
         if match:
             start_page = int(match.group(1))
 
-            if i < len(lines) - 1:  # Если это не последний элемент
-                next_match = re.search(r"(\d+)\s*$", lines[i+1])  # Ищем номер страницы в следующей строке, учитывая возможные пробелы.
+            if i < len(lines) - 1: 
+                next_match = re.search(r"(\d+)\s*$", lines[i+1]) 
                 end_page = int(next_match.group(1)) - 1 if next_match else start_page
             else:
                 end_page = start_page
 
-            # Убедимся, что end_page не меньше, чем start_page
             end_page = max(end_page, start_page)
-
-            # Убираем начальный номер и точку, а также обновляем номера страниц.
             text = re.sub(r"^\d+\.\s+", "", lines[i])
             text = re.sub(r"(\d+)\s*$", f"{start_page}-{end_page}", text)
-
             new_lines.append(text)
 
     return new_lines
 
- #this is final text for buttons
+ #текст который берется на кнопки
 new_lines_i = process_lines(lines_i)
 new_lines_o = process_lines(lines_o)

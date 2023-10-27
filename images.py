@@ -4,13 +4,11 @@ import io
 
 from PIL import Image, ImageDraw, ImageFont
 #этот код используется для создания и обработки папок с изображениями
-# work with images 
-# creating files with all images from pdfs
 # def extract_and_save_images_from_pdf_with_pymupdf(pdf_path, output_file):
 #     pdf_document = fitz.open(pdf_path)
     
 #     images_to_merge = []
-#     page_heights = {}  # словарь для хранения высот изображений каждой страницы
+#     page_heights = {}  
     
 #     y_offset = 0
 #     for current_page in range(pdf_document.page_count):
@@ -33,7 +31,7 @@ from PIL import Image, ImageDraw, ImageFont
 #             images_to_merge.append(image)
 #             y_offset += image.height
 
-#         # Обновление словаря границ страницы после добавления всех изображений этой страницы
+  
 #         page_heights[current_page + 1] = y_offset
 
 #     # Объединение всех изображений в одно
