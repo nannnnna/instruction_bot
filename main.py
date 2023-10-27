@@ -49,6 +49,13 @@ async def operator_choice_handler(message: types.Message):
     keyboard = make_keyboard_from_lines("operator", new_lines_o)
     await message.reply("Выберите элемент:", reply_markup=keyboard)
 
+async def send_long_text(chat_id, text, max_length=4096):
+    while text:
+        # Вырезаем кусок текста в пределах лимита
+        chunk, text = text[:max_length], text[max_length:]
+        # Отправляем кусок текста пользователю
+        await bot.send_message(chat_id, chunk)
+        
 # Обработчик CallbackQuery для элементов new_lines_i и new_lines_o
 @dp.callback_query_handler(lambda c: c.data.startswith("admin_") or c.data.startswith("operator_"))
 async def process_item_callback(callback_query: types.CallbackQuery):
@@ -78,13 +85,13 @@ async def process_item_callback(callback_query: types.CallbackQuery):
             else:
                 await bot.send_message(callback_query.from_user.id, f"Файл не найден: page{page}.png")
         
-        # Извлекаем и объединяем текст со всех страниц в диапазоне
+         # Извлекаем и объединяем текст со всех страниц в диапазоне
         pages_text = ""
-        for page in range(start_page, end_page+1):
+        for page in range(start_page, end_page + 1):
             pages_text += pages_dict.get(page, "") + "\n"
         
         # Отправляем текст пользователю
-        await bot.send_message(callback_query.from_user.id, pages_text or "Текст отсутствует.")
+        await send_long_text(callback_query.from_user.id, pages_text or "Текст отсутствует.")
     else:
         await bot.send_message(callback_query.from_user.id, "Не удалось найти диапазон страниц.")
         
