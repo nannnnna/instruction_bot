@@ -6,14 +6,16 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils import executor
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from text import pages_dict_o
 from text import pages_dict_i
 from text import new_lines_i
 from text import new_lines_o
 
-load_dotenv()
-token = os.getenv("token")
+load_dotenv(find_dotenv())
+token = os.getenv("TOKEN_API")
+
+print(os.getenv('token'))
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=token)
 dp = Dispatcher(bot)

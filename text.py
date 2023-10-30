@@ -29,6 +29,7 @@ def split_text_to_pages(text, pattern):
 #текст ответов "администратор"
 pattern_i = r'Руководство администратора\s+Стр\. \d+ из \d+'
 pages_dict_i = split_text_to_pages(text_inst_admi, pattern_i)
+print(pages_dict_i)
 
 #текст ответов "оператор"
 pattern_o = r'Руководство оператора\s+Стр\. \d+ из \d+'
@@ -49,23 +50,23 @@ def process_lines(lines):
     new_lines = []
 
     for i in range(len(lines)):
-        match = re.search(r"(\d+)\s*$", lines[i])  
+        match = re.search(r"(\d+)\.\s+(.*)\s+(\d+)", lines[i])
         if match:
-            start_page = int(match.group(1))
+            num, text, start_page = match.groups()
+            start_page = int(start_page)
 
-            if i < len(lines) - 1: 
-                next_match = re.search(r"(\d+)\s*$", lines[i+1]) 
+            if i < len(lines) - 1:
+                next_match = re.search(r"(\d+)\s*$", lines[i+1])
                 end_page = int(next_match.group(1)) - 1 if next_match else start_page
             else:
                 end_page = start_page
 
             end_page = max(end_page, start_page)
-            text = re.sub(r"^\d+\.\s+", "", lines[i])
-            text = re.sub(r"(\d+)\s*$", f"{start_page}-{end_page}", text)
-            new_lines.append(text)
+            new_lines.append(f"{num}.{text}        {start_page}-{end_page}")
 
     return new_lines
 
  #текст который берется на кнопки
 new_lines_i = process_lines(lines_i)
+print(new_lines_i)
 new_lines_o = process_lines(lines_o)
